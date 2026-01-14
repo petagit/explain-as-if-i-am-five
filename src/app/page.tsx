@@ -3,10 +3,9 @@
 import { useState, useCallback, useRef } from "react";
 import { SubjectInput } from "@/components/SubjectInput";
 import { LevelSelector } from "@/components/LevelSelector";
-import { ExplanationCard } from "@/components/ExplanationCard";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { HistoryPanel } from "@/components/HistoryPanel";
-import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
+import { AnswerView } from "@/components/AnswerView";
 import { useHistory, HistoryEntry } from "@/hooks/useHistory";
 import { ExplanationLevel } from "@/lib/prompts";
 
@@ -16,14 +15,14 @@ export default function Home() {
     useState<ExplanationLevel>("5-year-old");
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [submittedTopic, setSubmittedTopic] = useState("");
+  const [view, setView] = useState<"input" | "answer">("input");
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const { history, addEntry, removeEntry, clearHistory } = useHistory();
 
   const fetchExplanation = useCallback(
-    async (topicToExplain: string, level: ExplanationLevel) => {
+    async (topicToExplain: string, level: ExplanationLevel, addToHistory = true) => {
       if (!topicToExplain.trim()) return;
 
       // Cancel any ongoing request
@@ -76,7 +75,7 @@ export default function Home() {
                   fullText += data.text;
                   setExplanation(fullText);
                 }
-                if (data.done) {
+                if (data.done && addToHistory) {
                   // Add to history when complete
                   addEntry(topicToExplain, level, fullText);
                 }
@@ -88,7 +87,6 @@ export default function Home() {
         }
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") {
-          // Request was cancelled, ignore
           return;
         }
         console.error("Error fetching explanation:", error);
@@ -102,8 +100,8 @@ export default function Home() {
 
   const handleSubmit = useCallback(() => {
     if (topic.trim() && !isLoading) {
-      setHasSubmitted(true);
       setSubmittedTopic(topic);
+      setView("answer");
       fetchExplanation(topic, selectedLevel);
     }
   }, [topic, selectedLevel, isLoading, fetchExplanation]);
@@ -111,22 +109,22 @@ export default function Home() {
   const handleLevelChange = useCallback(
     (newLevel: ExplanationLevel) => {
       setSelectedLevel(newLevel);
-      // Auto-regenerate if we've already submitted
-      if (hasSubmitted && submittedTopic) {
+      // If in answer view, regenerate with new level
+      if (view === "answer" && submittedTopic) {
         fetchExplanation(submittedTopic, newLevel);
       }
     },
-    [hasSubmitted, submittedTopic, fetchExplanation]
+    [view, submittedTopic, fetchExplanation]
   );
 
-  const handleClear = useCallback(() => {
+  const handleBack = useCallback(() => {
     // Cancel any ongoing request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
+    setView("input");
     setTopic("");
     setExplanation(null);
-    setHasSubmitted(false);
     setSubmittedTopic("");
     setSelectedLevel("5-year-old");
     setIsLoading(false);
@@ -136,21 +134,26 @@ export default function Home() {
     setTopic(entry.topic);
     setSelectedLevel(entry.level);
     setExplanation(entry.explanation);
-    setHasSubmitted(true);
     setSubmittedTopic(entry.topic);
+    setView("answer");
   }, []);
 
-  useKeyboardNavigation({
-    currentLevel: selectedLevel,
-    onLevelChange: handleLevelChange,
-    onSubmit: handleSubmit,
-    hasSubmitted,
-    isLoading,
-    topic,
-  });
+  // Handle Enter key in input view
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" && view === "input" && topic.trim() && !isLoading) {
+        e.preventDefault();
+        handleSubmit();
+      }
+    },
+    [view, topic, isLoading, handleSubmit]
+  );
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 transition-colors duration-200">
+    <div
+      className="min-h-screen bg-zinc-50 dark:bg-zinc-900 transition-colors duration-200"
+      onKeyDown={handleKeyDown}
+    >
       <header className="fixed top-0 right-0 p-4 z-10">
         <ThemeToggle />
       </header>
@@ -163,67 +166,58 @@ export default function Home() {
       />
 
       <main className="flex flex-col items-center justify-start min-h-screen px-4 py-16 sm:py-24">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
-            Explain As If I Am?
-          </h1>
-          <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-md mx-auto">
-            Get any concept explained at your level of understanding
-          </p>
-        </div>
+        {view === "input" ? (
+          <>
+            {/* Input View */}
+            <div className="text-center mb-12">
+              <h1 className="text-4xl sm:text-5xl font-bold text-zinc-900 dark:text-zinc-100 mb-4">
+                Explain As If I Am?
+              </h1>
+              <p className="text-lg text-zinc-600 dark:text-zinc-400 max-w-md mx-auto">
+                Get any concept explained at your level of understanding
+              </p>
+            </div>
 
-        <div className="w-full max-w-2xl space-y-8">
-          <div className="relative">
-            <SubjectInput
-              value={topic}
-              onChange={setTopic}
-              onSubmit={handleSubmit}
-              isLoading={isLoading}
-            />
-            {(topic || explanation) && (
-              <button
-                onClick={handleClear}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-600 transition-colors"
-                aria-label="Clear"
-                title="Clear"
-              >
-                <svg
-                  className="w-5 h-5 text-zinc-500 dark:text-zinc-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <div className="w-full max-w-2xl space-y-8">
+              <SubjectInput
+                value={topic}
+                onChange={setTopic}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+              />
+
+              <LevelSelector
+                selectedLevel={selectedLevel}
+                onLevelChange={setSelectedLevel}
+                disabled={isLoading}
+              />
+
+              <div className="flex justify-center">
+                <button
+                  onClick={handleSubmit}
+                  disabled={!topic.trim() || isLoading}
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 text-white disabled:text-zinc-500 dark:disabled:text-zinc-400 font-medium rounded-xl transition-colors disabled:cursor-not-allowed"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            )}
-          </div>
+                  {isLoading ? "Generating..." : "Explain It!"}
+                </button>
+              </div>
+            </div>
 
-          <LevelSelector
-            selectedLevel={selectedLevel}
-            onLevelChange={handleLevelChange}
-            disabled={isLoading}
-          />
-
-          <ExplanationCard
-            explanation={explanation}
-            level={selectedLevel}
+            <footer className="mt-16 text-center text-sm text-zinc-500 dark:text-zinc-400">
+              <p>Powered by Google Gemini</p>
+            </footer>
+          </>
+        ) : (
+          /* Answer View */
+          <AnswerView
             topic={submittedTopic}
-            isLoading={isLoading && !explanation}
+            explanation={explanation || ""}
+            level={selectedLevel}
+            isLoading={isLoading}
+            onLevelChange={handleLevelChange}
+            onBack={handleBack}
           />
-        </div>
-
-        <footer className="mt-16 text-center text-sm text-zinc-500 dark:text-zinc-400">
-          <p>Powered by Google Gemini</p>
-          <p className="mt-1 text-xs">
-            Use arrow keys to switch levels, Enter to submit
-          </p>
-        </footer>
+        )}
       </main>
     </div>
   );
