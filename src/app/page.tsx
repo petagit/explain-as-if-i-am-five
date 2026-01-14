@@ -138,6 +138,15 @@ export default function Home() {
     setView("answer");
   }, []);
 
+  const handleNewTopic = useCallback(
+    (newTopic: string) => {
+      setTopic(newTopic);
+      setSubmittedTopic(newTopic);
+      fetchExplanation(newTopic, selectedLevel);
+    },
+    [selectedLevel, fetchExplanation]
+  );
+
   // Handle Enter key in input view
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -216,6 +225,7 @@ export default function Home() {
             isLoading={isLoading}
             onLevelChange={handleLevelChange}
             onBack={handleBack}
+            onNewTopic={handleNewTopic}
           />
         )}
       </main>

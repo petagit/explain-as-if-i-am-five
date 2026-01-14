@@ -11,6 +11,7 @@ interface AnswerViewProps {
   isLoading: boolean;
   onLevelChange: (level: ExplanationLevel) => void;
   onBack: () => void;
+  onNewTopic: (topic: string) => void;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -73,10 +74,23 @@ export function AnswerView({
   isLoading,
   onLevelChange,
   onBack,
+  onNewTopic,
 }: AnswerViewProps) {
   const levelConfig = getLevelConfig(level);
   const currentIndex = LEVELS.findIndex((l) => l.id === level);
   const [isVisible, setIsVisible] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+
+  const handleSearchSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (searchValue.trim() && !isLoading) {
+        onNewTopic(searchValue.trim());
+        setSearchValue("");
+      }
+    },
+    [searchValue, isLoading, onNewTopic]
+  );
 
   const canGoUp = currentIndex > 0;
   const canGoDown = currentIndex < LEVELS.length - 1;
@@ -226,6 +240,26 @@ export function AnswerView({
                 <span>Simpler</span>
                 <span>Complex</span>
               </div>
+            </div>
+
+            {/* Search bar */}
+            <div className="mt-8 pt-8 border-t border-zinc-200 dark:border-zinc-700">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3">
+                What would you like explained?
+              </label>
+              <form onSubmit={handleSearchSubmit}>
+                <input
+                  type="text"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  placeholder="Enter a topic (e.g., quantum physics, blockchain, photosynthesis)"
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                />
+              </form>
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                Press <kbd className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-700 rounded font-mono">Enter</kbd> to submit
+              </p>
             </div>
           </div>
         </div>
