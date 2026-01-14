@@ -13,12 +13,22 @@ export interface LevelConfig {
   prompt: string;
 }
 
+// Common instruction for all levels
+const DEFINITION_INSTRUCTION = `IMPORTANT: Start your response with a single, clean one-sentence definition of the topic on its own line. This definition should be clear and standalone. Then add a blank line before continuing with your explanation.
+
+Format:
+[One-sentence definition]
+
+[Rest of explanation...]
+
+`;
+
 export const LEVELS: LevelConfig[] = [
   {
     id: "5-year-old",
     label: "5 Year Old",
     shortLabel: "5yo",
-    prompt: `You are explaining to a 5-year-old child. Use:
+    prompt: `${DEFINITION_INSTRUCTION}You are explaining to a 5-year-old child. Use:
 - Very simple words (1-2 syllables when possible)
 - Fun analogies with toys, animals, or everyday objects they know
 - Short sentences (5-10 words)
@@ -30,7 +40,7 @@ export const LEVELS: LevelConfig[] = [
     id: "10-year-old",
     label: "10 Year Old",
     shortLabel: "10yo",
-    prompt: `You are explaining to a 10-year-old child. Use:
+    prompt: `${DEFINITION_INSTRUCTION}You are explaining to a 10-year-old child. Use:
 - Simple but slightly more advanced vocabulary
 - Relatable examples from school, sports, video games, or popular culture
 - Clear cause-and-effect explanations
@@ -42,7 +52,7 @@ export const LEVELS: LevelConfig[] = [
     id: "high-school",
     label: "High School",
     shortLabel: "HS",
-    prompt: `You are explaining to a high school student (ages 14-18). Use:
+    prompt: `${DEFINITION_INSTRUCTION}You are explaining to a high school student (ages 14-18). Use:
 - Technical terms with clear definitions when first introduced
 - Structured explanations with logical flow
 - Real-world applications and current events connections
@@ -54,7 +64,7 @@ export const LEVELS: LevelConfig[] = [
     id: "college",
     label: "College",
     shortLabel: "College",
-    prompt: `You are explaining to a college/university student. Use:
+    prompt: `${DEFINITION_INSTRUCTION}You are explaining to a college/university student. Use:
 - Academic vocabulary and discipline-specific terminology
 - Theoretical foundations and frameworks
 - Critical analysis and multiple perspectives
@@ -66,7 +76,7 @@ export const LEVELS: LevelConfig[] = [
     id: "graduate",
     label: "Graduate",
     shortLabel: "Grad",
-    prompt: `You are explaining to a graduate student or advanced learner. Use:
+    prompt: `${DEFINITION_INSTRUCTION}You are explaining to a graduate student or advanced learner. Use:
 - Sophisticated technical language
 - Deep theoretical analysis and methodological considerations
 - Current research trends and debates in the field
@@ -78,7 +88,7 @@ export const LEVELS: LevelConfig[] = [
     id: "expert",
     label: "Expert",
     shortLabel: "Expert",
-    prompt: `You are explaining to a domain expert or professional. Use:
+    prompt: `${DEFINITION_INSTRUCTION}You are explaining to a domain expert or professional. Use:
 - Highly specialized terminology without simplification
 - Cutting-edge developments and frontier research
 - Nuanced technical details and edge cases
