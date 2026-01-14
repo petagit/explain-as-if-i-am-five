@@ -96,10 +96,10 @@ export function AnswerView({
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      if (e.key === "ArrowLeft") {
         e.preventDefault();
         goUp();
-      } else if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      } else if (e.key === "ArrowRight") {
         e.preventDefault();
         goDown();
       } else if (e.key === "Escape") {
@@ -146,8 +146,8 @@ export function AnswerView({
         </button>
 
         <div className="text-xs text-zinc-400 dark:text-zinc-500">
-          <kbd className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-700 rounded font-mono">↑</kbd>{" "}
-          <kbd className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-700 rounded font-mono">↓</kbd>{" "}
+          <kbd className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-700 rounded font-mono">←</kbd>{" "}
+          <kbd className="px-1.5 py-0.5 bg-zinc-100 dark:bg-zinc-700 rounded font-mono">→</kbd>{" "}
           change level
         </div>
       </div>
